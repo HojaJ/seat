@@ -1,0 +1,116 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #f0f0f0;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.controls {
+    margin: 20px 0;
+}
+
+.legend {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.seat {
+    background-color: #444451;
+    height: 24px;
+    width: 30px;
+    margin: 3px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    cursor: pointer;
+}
+
+.seat.selected {
+    background-color: #6feaf6;
+}
+
+.seat.occupied {
+    background-color: #fff;
+    cursor: not-allowed;
+}
+
+.theatre {
+    perspective: 1000px;
+    margin-bottom: 30px;
+}
+
+.screen {
+    background: #333;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    border-radius: 5px;
+    transform: perspective(500px) rotateX(-10deg);
+    margin-bottom: 40px;
+}
+
+#seat-builder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.row {
+    display: flex;
+    gap: 5px;
+}
+
+.info {
+    margin-top: 20px;
+    font-size: 18px;
+}
+
+.info p {
+    margin: 5px 0;
+}
+
+.tools-panel {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.canvas-container {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#seat-canvas {
+    border: 1px solid #ddd;
+    background: #fff;
+}
+
+.selected-seat {
+    border: 2px solid #007bff !important;
+}
+
+.seat-tooltip {
+    position: absolute;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+} 
