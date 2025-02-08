@@ -8,11 +8,11 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
+    <div class="container mx-auto">
         <h1 class="text-center my-4">Theatre Seat Builder</h1>
         
         <div class="row gap-0">
-            <div class="col-md-3">
+            <div class="col-md-2">  
                 <div class="tools-panel">
                     <h4>Tools</h4>
                     <div class="mb-3">
@@ -31,6 +31,9 @@
                         <button id="save-layout" class="btn btn-info w-100">Save Layout</button>
                     </div>
                     <div class="mb-3">
+                        <button id="load-layout" class="btn btn-secondary w-100">Load Layout</button>
+                    </div>
+                    <div class="mb-3">
                         <button id="clear-canvas" class="btn btn-danger w-100">Clear Canvas</button>
                     </div>
                     <div class="mb-3">
@@ -45,10 +48,11 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-9">
+            <div class="col-md-10">
                 <div class="canvas-container">
                     <div class="screen mb-4">SCREEN</div>
                     <canvas id="seat-canvas"></canvas>
+
                 </div>
             </div>
         </div>

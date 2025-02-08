@@ -1,15 +1,15 @@
 class AdvancedTheatreSeatBuilder {
     constructor() {
         this.canvas = new fabric.Canvas('seat-canvas', {
-            width: 930,
+            width: 1040,
             height: 600,
             backgroundColor: '#ffffff'
         });
         
         this.currentRow = 'A';
         this.currentSeatNumber = 1;
-        this.seatSize = 40;
-        this.gridSize = 41;
+        this.seatSize = 30;
+        this.gridSize = 34;
         
         // Calculate center positions
         this.centerX = this.canvas.width / 2;
@@ -27,6 +27,10 @@ class AdvancedTheatreSeatBuilder {
                 this.removeSelectedSeats();
             }
         });
+
+        this.canvas.on('object:moving', (e) => this.constrainMovement(e));
+        this.canvas.on('selection:created', () => this.enforceLocking());
+        this.canvas.on('selection:updated', () => this.enforceLocking());
     }
 
     initializeEventListeners() {
@@ -39,6 +43,23 @@ class AdvancedTheatreSeatBuilder {
         this.canvas.on('selection:created', () => this.handleSelection());
         this.canvas.on('selection:updated', () => this.handleSelection());
         this.canvas.on('selection:cleared', () => this.handleSelectionCleared());
+
+        // Add new alignment buttons to the tools panel
+        const toolsPanel = document.querySelector('.tools-panel');
+        const alignmentDiv = document.createElement('div');
+        alignmentDiv.className = 'mb-3';
+        alignmentDiv.innerHTML = `
+            <div class="btn-group w-100">
+                <button id="align-horizontal" class="btn btn-outline-primary">Horizontal</button>
+            </div>
+        `;
+        
+        // Insert alignment controls before the save button
+        toolsPanel.insertBefore(alignmentDiv, document.getElementById('save-layout').parentNode);
+
+        // Add event listeners for alignment buttons
+        document.getElementById('align-horizontal').addEventListener('click', () => this.alignSeats('horizontal'));
+        document.getElementById('align-vertical').addEventListener('click', () => this.alignSeats('vertical'));
     }
 
     handleSelection() {
@@ -94,6 +115,12 @@ class AdvancedTheatreSeatBuilder {
     }
 
     createSeat(left, top, label) {
+        // Ensure the seat does not cross the canvas border
+        const maxLeft = this.canvas.width - this.seatSize;
+        const maxTop = this.canvas.height - this.seatSize;
+        left = Math.max(0, Math.min(left, maxLeft));
+        top = Math.max(0, Math.min(top, maxTop));
+
         const seatGroup = new fabric.Group([], {
             left: left,
             top: top,
@@ -105,7 +132,7 @@ class AdvancedTheatreSeatBuilder {
             interactive: true
         });
 
-        // Create seat shape
+        // Create seat shape with fixed color
         const seatRect = new fabric.Rect({
             width: this.seatSize,
             height: this.seatSize,
@@ -163,19 +190,44 @@ class AdvancedTheatreSeatBuilder {
         const rowName = document.getElementById('row-name').value || this.currentRow;
         const seatsCount = parseInt(document.getElementById('seats-count').value) || 8;
         
-        // Calculate total row width including all seats and gaps
-        const totalWidth = (seatsCount * this.seatSize) + ((seatsCount - 1) * (this.gridSize - this.seatSize));
+        const seats = [];
+        
+        // Calculate total width including all seats and gaps
+        const spacing = this.gridSize + 10; // Space between seats
+        const totalWidth = (seatsCount * this.seatSize) + ((seatsCount - 1) * spacing);
         
         // Calculate starting X position to center the row
         const startX = (this.canvas.width - totalWidth) / 2;
         let currentX = startX;
 
+        // Create all seats first
         for (let i = 1; i <= seatsCount; i++) {
             const label = `${rowName}${i}`;
             const seat = this.createSeat(currentX, this.currentY, label);
-            this.canvas.add(seat);
-            currentX += this.gridSize;
+            seats.push(seat);
+            currentX += this.seatSize + spacing;
         }
+
+        // Add all seats to canvas
+        seats.forEach(seat => {
+            this.canvas.add(seat);
+        });
+
+        // Create a selection of all seats in the row
+        const selection = new fabric.ActiveSelection(seats, {
+            canvas: this.canvas
+        });
+
+        // Center the selection on canvas
+        // selection.centerH();
+        selection.centerV();
+
+        // Select all seats and align them horizontally
+        this.canvas.setActiveObject(selection);
+        this.alignSeats('horizontal');
+        
+        // Remove the selection but keep the seats in place
+        this.canvas.discardActiveObject();
 
         this.currentRow = String.fromCharCode(rowName.charCodeAt(0) + 1);
         this.currentY += 45;
@@ -241,6 +293,117 @@ class AdvancedTheatreSeatBuilder {
                 );
             }
         });
+    }
+
+    alignSeats(direction) {
+        const activeSelection = this.canvas.getActiveObject();
+        if (!activeSelection || activeSelection.type !== 'activeSelection') {
+            Swal.fire({
+                title: 'Selection Required',
+                text: 'Please select multiple seats to align',
+                icon: 'warning'
+            });
+            return;
+        }
+
+        const objects = activeSelection.getObjects();
+        if (objects.length < 2) return;
+
+        // Reset rotation and lock scaling for all objects
+        objects.forEach(obj => {
+            obj.set({
+                angle: 0,
+                lockScalingX: true, // Ensure scaling is locked
+                lockScalingY: true  // Ensure scaling is locked
+            });
+        });
+
+        // Sort objects by their current position
+        const sortedObjects = [...objects].sort((a, b) => {
+            return direction === 'horizontal' ? a.left - b.left : a.top - b.top;
+        });
+
+        // Calculate spacing between seats with more space
+        const spacing = this.gridSize + 4;
+        
+        if (direction === 'horizontal') {
+            // Get the top position from the first seat for horizontal alignment
+            const avgTop = sortedObjects.reduce((sum, obj) => sum + obj.top, 0) / sortedObjects.length;
+            
+            // Calculate total width needed
+            const totalWidth = (objects.length - 1) * spacing;
+            // Calculate leftmost possible position to keep seats within canvas
+            const minLeft = this.seatSize / 2;
+            const maxLeft = this.canvas.width - totalWidth - this.seatSize / 2;
+            
+            // Ensure starting position is within bounds
+            let startLeft = Math.min(Math.max(sortedObjects[0].left, minLeft), maxLeft);
+            
+            sortedObjects.forEach((obj, index) => {
+                const newLeft = startLeft + (index * spacing);
+                obj.set({
+                    left: Math.max(this.seatSize / 2, Math.min(newLeft, this.canvas.width - this.seatSize / 2)),
+                    top: Math.min(Math.max(avgTop, this.seatSize / 2), this.canvas.height - this.seatSize / 2)
+                });
+            });
+        } else {
+            // Get the left position from the first seat for vertical alignment
+            const avgLeft = sortedObjects.reduce((sum, obj) => sum + obj.left, 0) / sortedObjects.length;
+            
+            // Calculate total height needed
+            const totalHeight = (objects.length - 1) * spacing;
+            // Calculate topmost possible position to keep seats within canvas
+            const minTop = this.seatSize / 2;
+            const maxTop = this.canvas.height - totalHeight - this.seatSize / 2;
+            
+            // Ensure starting position is within bounds
+            let startTop = Math.min(Math.max(sortedObjects[0].top, minTop), maxTop);
+            
+            sortedObjects.forEach((obj, index) => {
+                const newTop = startTop + (index * spacing);
+                obj.set({
+                    top: Math.max(this.seatSize / 2, Math.min(newTop, this.canvas.height - this.seatSize / 2)),
+                    left: Math.min(Math.max(avgLeft, this.seatSize / 2), this.canvas.width - this.seatSize / 2)
+                });
+            });
+        }
+
+        // Update the canvas and selection
+        this.canvas.renderAll();
+        activeSelection.setCoords();
+
+        // Show success message
+        Swal.fire({
+            title: 'Success',
+            text: `Seats aligned ${direction}ly`,
+            icon: 'success',
+            timer: 1000,
+            showConfirmButton: false
+        });
+    }
+
+    constrainMovement(e) {
+        const obj = e.target;
+        const maxLeft = this.canvas.width - this.seatSize;
+        const maxTop = this.canvas.height - this.seatSize;
+
+        // Constrain movement within canvas boundaries
+        obj.set({
+            left: Math.max(0, Math.min(obj.left, maxLeft)),
+            top: Math.max(0, Math.min(obj.top, maxTop))
+        });
+    }
+
+    enforceLocking() {
+        const activeSelection = this.canvas.getActiveObject();
+        if (activeSelection && activeSelection.type === 'activeSelection') {
+            activeSelection.getObjects().forEach(obj => {
+                obj.set({
+                    lockScalingX: true,
+                    lockScalingY: true
+                });
+            });
+        }
     }
 }
 
