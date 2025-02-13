@@ -2,7 +2,7 @@ class AdvancedTheatreSeatBuilder {
     constructor(seats) {
         this.seats = seats; // Store seats data
         this.canvas = new fabric.Canvas('seat-canvas', {
-            width: 2500,
+            width: 2000,
             height: 800,
             backgroundColor: '#ffffff'
         });
@@ -10,7 +10,7 @@ class AdvancedTheatreSeatBuilder {
         this.currentRow = 'A';
         this.currentSeatNumber = 1;
         this.seatSize = 25;  // Smaller seats
-        this.gridSize = 35;  // More space between seats
+        this.gridSize = 30;  // More space between seats
         
         // Calculate center positions
         this.centerX = this.canvas.width / 2;
@@ -414,6 +414,7 @@ class AdvancedTheatreSeatBuilder {
     createSeatsLayout() {
         // Clear existing canvas
         this.canvas.clear();
+        this.addScreen();
 
         // Define section configurations
         const sectionConfigs = {
@@ -458,7 +459,7 @@ class AdvancedTheatreSeatBuilder {
             // Determine section-specific X offset
             let sectionXOffset = 0;
             if (sectionName === 'section_left') {
-                sectionXOffset = 0; // Left side
+                sectionXOffset = 20; // Left side
             } else if (sectionName === 'section_center') {
                 sectionXOffset = this.centerX - (sectionConfig.totalWidth / 2); // Center
             } else if (sectionName === 'section_right') {
@@ -478,7 +479,7 @@ class AdvancedTheatreSeatBuilder {
                 rowSeats.forEach((seatNumber, seatIndex) => {
                     // Calculate base position
                     const left = sectionXOffset + (seatIndex * this.gridSize);
-                    const top = this.startY + (rowIndex * (this.gridSize + 20)); // 20px gap between rows
+                    const top = this.startY + (rowIndex * (this.gridSize + 10)); // 10px gap between rows
 
                     // Create seat with label
                     const seatLabel = `${row}${seatNumber}`;
