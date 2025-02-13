@@ -51,16 +51,6 @@ body {
     margin-bottom: 30px;
 }
 
-.screen {
-    background: #333;
-    color: white;
-    padding: 15px;
-    text-align: center;
-    border-radius: 5px;
-    transform: perspective(500px) rotateX(-10deg);
-    margin-bottom: 40px;
-}
-
 #seat-builder {
     display: flex;
     flex-direction: column;
